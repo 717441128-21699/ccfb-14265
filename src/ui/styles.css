@@ -1,0 +1,287 @@
+:root {
+  --bg: #0f1620;
+  --panel: #182230;
+  --panel-2: #1f2c3d;
+  --line: #2c3e54;
+  --text: #e6edf5;
+  --muted: #8aa0b6;
+  --accent: #3b9eff;
+  --accent-2: #2bd0a8;
+  --warn: #ffb454;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.app {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  font-size: 19px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.env-fields {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.env-fields label,
+.toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+input[type="number"],
+input[type="text"],
+input[type="date"] {
+  width: 90px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+input[type="text"] {
+  width: 140px;
+}
+
+button {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover {
+  background: #28394e;
+  border-color: var(--accent);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06121f;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: #5badff;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.tab {
+  background: transparent;
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06121f;
+  font-weight: 600;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.cal-status {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+
+.cal-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.param-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.param-card .k {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.param-card .v {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.thumb-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.thumb {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumb img {
+  width: 100%;
+  display: block;
+}
+
+.thumb .badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.thumb .badge.ok {
+  color: var(--accent-2);
+}
+
+.thumb .badge.bad {
+  color: #ff7a7a;
+}
+
+.canvas-wrap {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 300px;
+}
+
+.canvas-wrap canvas {
+  max-width: 100%;
+  background: #0a0f16;
+  border-radius: 6px;
+}
+
+.measure-wrap {
+  cursor: crosshair;
+}
+
+.perf {
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.measure-info {
+  color: var(--warn);
+}
+
+.measure-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.measure-row {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+
+.catalog {
+  display: grid;
+  gap: 10px;
+}
+
+.catalog-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.catalog-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.catalog-card .meta {
+  color: var(--muted);
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.catalog-card button {
+  margin-top: 10px;
+}

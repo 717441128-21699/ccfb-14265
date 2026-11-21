@@ -1,3 +1,12 @@
+node_modules/
+dist/
+*.local
+test-result.txt
+.DS_Store
+*.log
+.vite/
+coverage/
+
 .env
 .env.*
 !.env.example
@@ -12,7 +21,6 @@ secrets.*
 credentials*.json
 .npmrc
 .pypirc
-node_modules/
 __pycache__/
 .venv/
 venv/

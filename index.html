@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>水下考古折射校正测量工具</title>
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <h1>水下考古 · 折射校正测量工具</h1>
+        <div class="env-fields">
+          <label>水温(°C)<input id="tempC" type="number" value="20" step="0.1" /></label>
+          <label>盐度(PSU)<input id="salinity" type="number" value="35" step="0.1" /></label>
+          <label>水深(m)<input id="diveDepth" type="number" value="2" step="0.1" /></label>
+          <button id="applyEnv">应用工况</button>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="calibration">① 折射标定</button>
+        <button class="tab" data-tab="correction">② 图像校正</button>
+        <button class="tab" data-tab="measure">③ 测量</button>
+        <button class="tab" data-tab="catalog">④ 探方目录</button>
+      </nav>
+
+      <main>
+        <!-- 标定页 -->
+        <section id="tab-calibration" class="tab-panel active">
+          <div class="toolbar">
+            <button id="calAddImages">导入水下棋盘格</button>
+            <input id="calFiles" type="file" accept="image/*" multiple hidden />
+            <label>格距(mm)<input id="squareMm" type="number" value="30" /></label>
+            <label>列<input id="boardCols" type="number" value="9" /></label>
+            <label>行<input id="boardRows" type="number" value="7" /></label>
+            <label><input id="fixNw" type="checkbox" checked /> 固定水折射率(按工况)</label>
+            <button id="runCalibration" class="primary">运行标定</button>
+          </div>
+          <div class="cal-status" id="calStatus">尚未标定。请导入至少 3 张不同姿态的水下棋盘格照片。</div>
+          <div class="cal-params" id="calParams"></div>
+          <div class="thumb-strip" id="calThumbs"></div>
+        </section>
+
+        <!-- 校正页 -->
+        <section id="tab-correction" class="tab-panel">
+          <div class="toolbar">
+            <button id="loadImage">导入待校正照片</button>
+            <input id="imageFile" type="file" accept="image/*" hidden />
+            <label>参考深度(mm)<input id="refDepth" type="number" value="850" /></label>
+            <button id="runCorrection" class="primary">折射校正</button>
+            <button id="downloadCorrected">下载校正图</button>
+            <span id="corrPerf" class="perf"></span>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="srcCanvas"></canvas>
+            <canvas id="outCanvas"></canvas>
+          </div>
+        </section>
+
+        <!-- 测量页 -->
+        <section id="tab-measure" class="tab-panel">
+          <div class="toolbar">
+            <button id="setScaleBar">设置比例尺残段</button>
+            <button id="clearMeasure">清空测量</button>
+            <span id="measureInfo" class="measure-info"></span>
+          </div>
+          <div class="canvas-wrap measure-wrap">
+            <canvas id="measureCanvas"></canvas>
+          </div>
+          <div class="measure-list" id="measureList"></div>
+        </section>
+
+        <!-- 目录页 -->
+        <section id="tab-catalog" class="tab-panel">
+          <div class="toolbar">
+            <label>探方编号<input id="siteId" type="text" placeholder="如 T03" /></label>
+            <label>日期<input id="diveDate" type="date" /></label>
+            <button id="saveRecord" class="primary">保存当前记录</button>
+          </div>
+          <div class="catalog" id="catalogList"></div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/ui/main.ts"></script>
+  </body>
+</html>

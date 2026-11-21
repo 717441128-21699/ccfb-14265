@@ -1,0 +1,21 @@
+{
+  "name": "underwater-refraction-calibrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "水下考古平面观察窗折射标定、WebGL2 校正与测量工具",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "tsx scripts/bench.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  }
+}
