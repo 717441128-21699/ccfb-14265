@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>水下探方摄影测量校正工具</title>
+  <style>
+    :root { --bg:#f5f6f8; --panel:#fff; --line:#d8dce2; --ink:#1c2430; --accent:#0b5fa5; --ok:#137a3f; --bad:#b3261e; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:14px/1.6 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+    header { background:#0d2f4f; color:#fff; padding:10px 18px; }
+    header h1 { font-size:17px; margin:0; font-weight:600; }
+    header .sub { font-size:12px; opacity:.75; }
+    nav { display:flex; gap:2px; background:#103a61; padding:0 12px; }
+    nav button { background:none; border:none; color:#cfe0f0; padding:10px 16px; cursor:pointer; font-size:14px; border-bottom:3px solid transparent; }
+    nav button.active { color:#fff; border-bottom-color:#4da3ff; font-weight:600; }
+    main { padding:16px; max-width:1280px; margin:0 auto; }
+    .tab { display:none; }
+    .tab.active { display:block; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+    .panel h2 { font-size:15px; margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px 16px; }
+    label { display:flex; flex-direction:column; font-size:12px; color:#54607a; gap:2px; }
+    input, select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:5px; background:#fff; color:var(--ink); }
+    button.act { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:14px; cursor:pointer; }
+    button.act:disabled { opacity:.45; cursor:default; }
+    button.sub { background:#eef2f7; border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:8px 0; }
+    .ok { color:var(--ok); font-weight:600; }
+    .bad { color:var(--bad); font-weight:600; }
+    .mono { font-family:Consolas, "Courier New", monospace; font-size:13px; }
+    table { border-collapse:collapse; width:100%; font-size:13px; }
+    th, td { border:1px solid var(--line); padding:4px 8px; text-align:left; }
+    th { background:#f0f3f7; }
+    canvas.view { max-width:100%; border:1px solid var(--line); background:#222; cursor:crosshair; display:block; }
+    .hint { font-size:12px; color:#6b7690; }
+    .filelist { max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:6px; }
+    .filelist div { padding:3px 10px; border-bottom:1px solid #eef1f5; font-size:13px; display:flex; justify-content:space-between; }
+    #measureCanvasWrap { position:relative; overflow:auto; max-height:70vh; }
+    .stat { display:inline-block; background:#eef6ff; border:1px solid #cfe4ff; border-radius:6px; padding:4px 12px; margin:2px 6px 2px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>水下探方摄影测量校正工具</h1>
+    <div class="sub">平面防水壳折射标定 · 图像校正 · 两点量测 · 按探方/日期归档</div>
+  </header>
+  <nav>
+    <button data-tab="calib" class="active">① 下水标定</button>
+    <button data-tab="correct">② 照片校正</button>
+    <button data-tab="measure">③ 量测</button>
+    <button data-tab="selftest">④ 合成自检</button>
+    <button data-tab="archive">⑤ 档案目录</button>
+  </nav>
+  <main>
+    <!-- ================= 标定 ================= -->
+    <section id="tab-calib" class="tab active">
+      <div class="panel">
+        <h2>1. 防水壳与水体参数</h2>
+        <div class="grid">
+          <label>玻璃折射率 n<input id="nGlass" type="number" step="0.01" value="1.52"></label>
+          <label>玻璃厚度 mm<input id="tGlass" type="number" step="0.5" value="4"></label>
+          <label>壳内空气间隙初值 mm<input id="dAirInit" type="number" step="1" value="25"></label>
+          <label>水温 °C<input id="waterT" type="number" step="0.5" value="15"></label>
+          <label>盐度 PSU(淡水填0)<input id="waterS" type="number" step="0.5" value="0"></label>
+          <label>水折射率 n(自动,可改)<input id="nWater" type="number" step="0.0005" value="1.3335"></label>
+        </div>
+        <div class="row hint">水折射率由水温/盐度估算(改动水温盐度即自动更新);若有折射仪实测值可直接覆盖。每次下水按当次水温盐度重标即可。</div>
+        <div class="row">
+          <label style="flex-direction:row;align-items:center;gap:6px">
+            <input id="fitNWater" type="checkbox" style="width:auto"> 同时拟合 n(带先验约束,一般不需要)
+          </label>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>2. 棋盘格标定板</h2>
+        <div class="grid">
+          <label>内角点 列数<input id="boardCols" type="number" value="9"></label>
+          <label>内角点 行数<input id="boardRows" type="number" value="6"></label>
+          <label>格子边长 mm<input id="boardSq" type="number" step="0.5" value="30"></label>
+        </div>
+        <div class="row">
+          <input id="calibFiles" type="file" accept="image/*" multiple>
+          <button id="btnDetect" class="sub">检测角点</button>
+          <button id="btnCalibrate" class="act" disabled>运行标定</button>
+        </div>
+        <div id="calibFileList" class="filelist"></div>
+        <div class="hint">建议 6–12 张: 板在画面中不同位置、不同距离(0.5–1.5m)、不同倾角, 覆盖画面四角。全部角点须在画面内。</div>
+      </div>
+      <div class="panel">
+        <h2>3. 标定结果</h2>
+        <div id="calibResult" class="mono">尚未标定。</div>
+        <div class="row">
+          <button id="btnSaveCalib" class="sub" disabled>保存标定到档案</button>
+          <button id="btnLoadCalib" class="sub">从文件载入标定…</button>
+          <input id="loadCalibFile" type="file" accept=".json" style="display:none">
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 校正 ================= -->
+    <section id="tab-correct" class="tab">
+      <div class="panel">
+        <h2>照片校正(WebGL2 重采样)</h2>
+        <div class="row">
+          <span id="correctCalibInfo" class="hint">未载入标定, 请先在「下水标定」页完成或载入标定。</span>
+        </div>
+        <div class="row">
+          <input id="correctFiles" type="file" accept="image/*" multiple>
+          <label style="flex-direction:row;align-items:center;gap:4px">输出
+            <select id="outFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+          </label>
+          <button id="btnCorrect" class="act" disabled>开始校正</button>
+        </div>
+        <div id="correctList" class="filelist"></div>
+        <div class="row"><canvas id="correctPreview" class="view" style="max-height:50vh"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ================= 量测 ================= -->
+    <section id="tab-measure" class="tab">
+      <div class="panel">
+        <h2>两点量测</h2>
+        <div class="row">
+          <input id="measureFile" type="file" accept="image/*">
+          <label>方式
+            <select id="measureMode">
+              <option value="bar">比例尺残段(假设近似垂直拍摄)</option>
+              <option value="board">棋盘格定面(照片中含标定板)</option>
+            </select>
+          </label>
+          <span id="measureStatus" class="hint">先载入一张原始水下照片。</span>
+        </div>
+        <div class="row" id="barRow" style="display:none">
+          <span class="hint">在比例尺<b>剩余可见段</b>上点两个端点, 然后输入该段真实长度:</span>
+          <label>残段真实长度 mm<input id="barLen" type="number" step="1" value="50" style="width:90px"></label>
+          <button id="btnBarSet" class="sub" disabled>设定比例</button>
+        </div>
+        <div id="measureCanvasWrap"><canvas id="measureCanvas" class="view"></canvas></div>
+        <div class="row hint">滚轮缩放 · 拖动平移 · 单击取点(每两点出一条长度) · 双击撤销上一个点</div>
+        <div id="measureResults"></div>
+        <div class="row"><button id="btnSaveMeasure" class="sub" disabled>保存量测记录到档案</button></div>
+      </div>
+    </section>
+
+    <!-- ================= 合成自检 ================= -->
+    <section id="tab-selftest" class="tab">
+      <div class="panel">
+        <h2>合成数据自检(真实折射几何光线追踪)</h2>
+        <div class="grid">
+          <label>视图数<input id="stViews" type="number" value="7"></label>
+          <label>角点噪声 σ (px)<input id="stNoise" type="number" step="0.05" value="0.15"></label>
+          <label>图像宽<input id="stW" type="number" value="1500"></label>
+          <label>图像高<input id="stH" type="number" value="1000"></label>
+        </div>
+        <div class="row"><button id="btnSelfTest" class="act">运行自检</button></div>
+        <div id="selftestResult" class="mono"></div>
+        <div class="row" style="align-items:flex-start">
+          <div><div class="hint">合成图(折射畸变后)</div><canvas id="stCanvasRaw" class="view" style="max-width:44vw"></canvas></div>
+          <div><div class="hint">校正后(网格应恢复笔直)</div><canvas id="stCanvasCorr" class="view" style="max-width:44vw"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 档案 ================= -->
+    <section id="tab-archive" class="tab">
+      <div class="panel">
+        <h2>档案目录(探方 / 日期)</h2>
+        <div class="row">
+          <button id="btnPickRoot" class="sub">选择根目录…</button>
+          <span id="rootInfo" class="hint">未选择(保存时将退化为浏览器下载)</span>
+        </div>
+        <div class="grid">
+          <label>探方号<input id="tanfang" type="text" placeholder="如 T0302"></label>
+          <label>日期<input id="diveDate" type="date"></label>
+        </div>
+        <div class="row"><span id="archivePath" class="mono hint"></span></div>
+        <div class="row">
+          <button id="btnSaveAll" class="act">保存当前标定与量测到档案</button>
+          <button id="btnLoadFromArchive" class="sub">载入该探方/日期的标定</button>
+        </div>
+        <div id="archiveTree" class="mono"></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
