@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>水下折射标定与测量工具</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>水下考古折射标定与测量</h1>
+      <nav class="tabs">
+        <button class="tab active" data-tab="calib">① 折射标定</button>
+        <button class="tab" data-tab="measure">② 校正测量</button>
+        <button class="tab" data-tab="catalog">③ 探方目录</button>
+        <button class="tab" data-tab="help">④ 说明</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- 标定页 -->
+      <section id="tab-calib" class="panel active">
+        <div class="grid-2">
+          <div class="card">
+            <h2>潜水环境（每次下水独立标定）</h2>
+            <div class="form-row">
+              <label>探方编号 <input id="trench" value="T01" /></label>
+              <label>日期 <input id="date" type="date" /></label>
+            </div>
+            <div class="form-row">
+              <label>水温 (°C) <input id="temperatureC" type="number" value="18" step="0.1" /></label>
+              <label>盐度 (PSU) <input id="salinityPSU" type="number" value="32" step="0.1" /></label>
+            </div>
+            <div class="form-row">
+              <label>水折射率 n（自动） <input id="nWater" readonly /></label>
+            </div>
+            <h2>窗口机械参数（装配图）</h2>
+            <div class="form-row">
+              <label>光心到玻璃 d0 (mm) <input id="d0" type="number" value="28" step="0.1" /></label>
+              <label>玻璃厚度 t (mm) <input id="t" type="number" value="6" step="0.1" /></label>
+            </div>
+            <div class="form-row">
+              <label>玻璃折射率 nGlass <input id="nGlass" type="number" value="1.517" step="0.001" /></label>
+              <label>焦距先验 fx（可选，像素） <input id="fxprior" type="number" placeholder="留空则估计" /></label>
+            </div>
+            <h2>棋盘格规格</h2>
+            <div class="form-row">
+              <label>内角点行 <input id="rows" type="number" value="9" /></label>
+              <label>内角点列 <input id="cols" type="number" value="12" /></label>
+              <label>方格边长 (mm) <input id="squareMm" type="number" value="20" /></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>棋盘格图像（≥3 张，多距离多姿态）</h2>
+            <div class="button-row">
+              <input id="fileInput" type="file" accept="image/*" multiple hidden />
+              <button id="btnLoadFiles">导入照片</button>
+              <button id="btnDemoViews" class="secondary">载入合成演示图</button>
+              <button id="btnClearViews" class="danger">清空</button>
+            </div>
+            <ul id="viewList" class="view-list"></ul>
+            <div class="button-row">
+              <button id="btnCalibrate" class="primary">开始标定</button>
+              <button id="btnSaveCalib" disabled>保存到目录</button>
+            </div>
+            <div id="calibReport" class="report"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>运行日志</h2>
+          <pre id="log" class="log"></pre>
+        </div>
+      </section>
+
+      <!-- 测量页 -->
+      <section id="tab-measure" class="panel">
+        <div class="grid-2">
+          <div class="card">
+            <h2>校正与两点测量</h2>
+            <div class="form-row">
+              <label>使用标定 <select id="calibSelect"></select></label>
+            </div>
+            <div class="form-row">
+              <label>探方平面深度 (mm) <input id="planeDepth" type="number" value="1500" /></label>
+              <label>正射分辨率 (mm/px) <input id="mmPerPx" type="number" value="0.5" step="0.1" /></label>
+            </div>
+            <div class="button-row">
+              <input id="measureFile" type="file" accept="image/*" hidden />
+              <button id="btnLoadMeasure">导入待校正照片</button>
+              <button id="btnDemoMeasure" class="secondary">载入演示照片</button>
+              <button id="btnRectify" class="primary" disabled>生成正射校正图</button>
+            </div>
+            <p class="hint">校正后在图上点击两点即量测物理长度；比例尺半遮挡时，用剩余可见段两端点先做尺度核对。</p>
+            <div id="measureResult" class="report"></div>
+            <div class="button-row">
+              <button id="btnClearPoints" class="danger" disabled>清除测点</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>图像（点击取两点）</h2>
+            <div class="canvas-wrap">
+              <canvas id="measureCanvas" width="640" height="480"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 目录页 -->
+      <section id="tab-catalog" class="panel">
+        <div class="card">
+          <h2>探方 / 日期目录</h2>
+          <div class="button-row">
+            <button id="btnRefreshCatalog">刷新</button>
+          </div>
+          <div id="catalogTree" class="catalog-tree"></div>
+        </div>
+      </section>
+
+      <!-- 说明页 -->
+      <section id="tab-help" class="panel">
+        <div class="card doc">
+          <h2>方法与操作说明</h2>
+          <h3>1. 为什么普通镜头畸变校正不适用</h3>
+          <p>相机隔着平面玻璃窗在水下成像，光线依次经过 空气→玻璃→水 两个平行界面发生 Snell 折射。
+          折射量随入射角增大，画面边缘被非线性拉大，且不满足普通相机的径向畸变模型。本工具按
+          窗口法向、光心到玻璃距离 d0、玻璃厚度 t、玻璃/水折射率做物理光线追踪，而非多项式畸变拟合。</p>
+          <h3>2. 每次下水重新标定</h3>
+          <p>水温、盐度改变水的折射率（Quan–Fry 公式）。每次下水拍摄一组水下棋盘格，输入温盐后联合优化
+          内参、窗口倾斜与厚度，重投影误差控制在 0.5 像素内。d0 与玻璃折射率由壳体装配图/玻璃牌号给定。</p>
+          <h3>3. 半遮挡比例尺</h3>
+          <p>比例尺被泥沙覆盖时，只需在剩余可见段两端点取点并给出可见段真实长度（全长×可见比例）。
+          单根比例尺定平面存在法向锥面歧义，工具用探方近似正对相机的朝向先验消歧，并明确提示歧义。</p>
+          <h3>4. 测量精度与性能</h3>
+          <p>校正生成正射影像，像素与毫米线性对应，两点距离即物理长度，目标误差 ≤1%。
+          重采样在 WebGL2 着色器中并行完成，2400 万像素目标 2 秒内；不支持 WebGL2 时回退 CPU。</p>
+          <h3>5. 数据存储</h3>
+          <p>标定记录与照片元数据保存在浏览器 IndexedDB，按探方编号和日期两级组织，纯本地、不上传。</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
